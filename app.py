@@ -122,14 +122,21 @@ def update_cookies():
         data = request.get_json(silent=True) or {}
         cookie_text = data.get('cookies') or request.data.decode('utf-8')
 
-        if not cookie_text:
+        if not cookie_text or not cookie_text.strip():
             return jsonify({'error': 'No cookie content provided'}), 400
+
+        cookie_text = cookie_text.strip()
+
+        # Enforce valid Netscape header expected by yt-dlp
+        header = "# Netscape HTTP Cookie File\n"
+        if not cookie_text.startswith("# Netscape") and not cookie_text.startswith("# HTTP Cookie File"):
+            cookie_text = header + cookie_text
 
         cookie_path = os.path.join(os.getcwd(), 'cookies.txt')
         with open(cookie_path, 'w', encoding='utf-8') as f:
-            f.write(cookie_text)
+            f.write(cookie_text + "\n")
 
-        return jsonify({'status': 'success', 'message': 'Cookies updated successfully'})
+        return jsonify({'status': 'success', 'message': 'Cookies updated successfully in valid Netscape format'})
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
