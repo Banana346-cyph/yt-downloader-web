@@ -32,7 +32,7 @@ def progress_hook(d):
         total = d.get('total_bytes') or d.get('total_bytes_estimate') or 0
         downloaded = d.get('downloaded_bytes', 0)
         percentage = (downloaded / total * 100) if total > 0 else 0
-        
+
         download_status['percent'] = round(percentage, 1)
         download_status['status'] = 'downloading'
         download_status['filename'] = d.get('filename', '')
@@ -66,12 +66,19 @@ def run_download(url):
         'format': 'bestvideo[height<=1080][ext=mp4]+bestaudio[ext=m4a]/bestvideo[height<=1080]+bestaudio/best[height<=1080]',
         'outtmpl': os.path.join(DOWNLOAD_FOLDER, '%(title)s.%(ext)s'),
         'merge_output_format': 'mp4',
-        
+
+        # Bypass YouTube web client verification by falling back to Android/iOS API streams
+        'extractor_args': {
+            'youtube': {
+                'player_client': ['android', 'ios', 'web']
+            }
+        },
+
         # Speed Optimizations: fetch fragments in parallel and optimize HTTP throughput
         'concurrent_fragment_downloads': 8,
         'http_chunk_size': 10485760,  # 10MB chunk size
         'buffersize': 1024 * 64,       # 64KB buffer
-        
+
         'progress_hooks': [progress_hook],
         'nocheckcertificate': True,
         'remote_components': ['ejs:github'],
@@ -166,4 +173,3 @@ def update_cookies():
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))
     app.run(host='0.0.0.0', port=port)
-
