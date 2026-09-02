@@ -1,55 +1,16 @@
 import os
-import sys
 import glob
-import threading
-from flask import Flask, render_template, request, jsonify
-
-# Prepend Deno paths to system PATH so yt-dlp auto-detects the JavaScript runtime
-deno_dirs = [
-    os.path.join(os.getcwd(), 'deno', 'bin'),
-    os.path.expanduser('~/.deno/bin'),
-    '/opt/render/.deno/bin'
-]
-for d in deno_dirs:
-    if os.path.exists(d) and d not in os.environ.get('PATH', ''):
-        os.environ['PATH'] = f"{d}:{os.environ.get('PATH', '')}"
-
-import static_ffmpeg
-static_ffmpeg.add_paths()
-
 import yt_dlp
+from flask import Flask, render_template, request, jsonify
 
 app = Flask(__name__)
 
-DOWNLOAD_FOLDER = os.path.join(os.getcwd(), 'downloads')
-os.makedirs(DOWNLOAD_FOLDER, exist_ok=True)
-
-progress_data = {
-    'status': 'idle',
-    'progress': 0,
-    'speed': '0 KB/s',
-    'eta': '0s',
-    'filename': '',
-    'error': None
-}
-
-def find_cookie_file():
-    root_cookies = os.path.join(os.getcwd(), 'cookies.txt')
-    if os.path.exists(root_cookies):
-        return root_cookies
-    
-    txt_files = glob.glob(os.path.join(os.getcwd(), '*.txt'))
-    if txt_files:
-        return txt_files[0]
-    
-    return None
-
-def get_base_ydl_opts():
+def get_base_ydl_opts(use_proxy=True):
     opts = {
         'quiet': True,
         'no_warnings': True,
         'remote_components': ['ejs:github'],
-        # Prefer iOS and Android clients to bypass web datacenter blocks
+        # Cycle mobile client emulators to bypass datacenter IP blocks
         'extractor_args': {
             'youtube': {
                 'player_client': ['ios', 'android', 'mweb', 'web']
@@ -59,11 +20,18 @@ def get_base_ydl_opts():
             'User-Agent': 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.5 Mobile/15E148 Safari/604.1'
         }
     }
-    
-    cookie_file = find_cookie_file()
-    if cookie_file:
-        opts['cookiefile'] = cookie_file
 
+    # Optional: Set a PROXY_URL environment variable in Render (e.g., http://user:pass@proxy.com:port)
+    proxy_url = os.environ.get('PROXY_URL')
+    if use_proxy and proxy_url:
+        opts['proxy'] = proxy_url
+
+    # Check for locally uploaded cookies
+    cookie_path = os.path.join(os.getcwd(), 'cookies.txt')
+    if os.path.exists(cookie_path):
+        opts['cookiefile'] = cookie_path
+
+    # Auto-detect Deno runtime if available
     deno_exe = None
     for candidate in [
         os.path.join(os.getcwd(), 'deno', 'bin', 'deno'),
@@ -78,52 +46,6 @@ def get_base_ydl_opts():
         opts['js_runtimes'] = {'deno': {'path': deno_exe}}
 
     return opts
-
-def progress_hook(d):
-    global progress_data
-    if d['status'] == 'downloading':
-        total = d.get('total_bytes') or d.get('total_bytes_estimate') or 0
-        downloaded = d.get('downloaded_bytes', 0)
-        pct = (downloaded / total * 100) if total > 0 else 0
-        
-        progress_data['status'] = 'downloading'
-        progress_data['progress'] = round(pct, 1)
-        progress_data['speed'] = d.get('_speed_str', 'N/A').strip()
-        progress_data['eta'] = d.get('_eta_str', 'N/A').strip()
-        progress_data['filename'] = os.path.basename(d.get('filename', ''))
-    elif d['status'] == 'finished':
-        progress_data['status'] = 'finished'
-        progress_data['progress'] = 100.0
-
-def run_download(url, format_id=None):
-    global progress_data
-    progress_data['status'] = 'starting'
-    progress_data['progress'] = 0
-    progress_data['error'] = None
-
-    ydl_opts = get_base_ydl_opts()
-
-    # Formats fallback priority chain
-    if format_id and format_id != 'auto':
-        ydl_format = f"{format_id}+ba/bestvideo+bestaudio/{format_id}/best"
-    else:
-        ydl_format = 'bv*[height<=1080]+ba/b[height<=1080]/bv*+ba/best'
-
-    ydl_opts.update({
-        'format': ydl_format,
-        'outtmpl': os.path.join(DOWNLOAD_FOLDER, '%(id)s.%(ext)s'),
-        'merge_output_format': 'mp4',
-        'progress_hooks': [progress_hook],
-    })
-
-    try:
-        print(f"Starting download for {url} with format selection: {ydl_format}")
-        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-            ydl.download([url])
-    except Exception as e:
-        print(f"DOWNLOAD ERROR: {e}")
-        progress_data['status'] = 'error'
-        progress_data['error'] = str(e)
 
 @app.route('/')
 def index():
@@ -141,19 +63,21 @@ def get_formats():
 
     try:
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+            # Extract video metadata directly without storing files locally
             info = ydl.extract_info(url, download=False)
             formats_raw = info.get('formats', [])
             
-            formats = [{'format_id': 'auto', 'label': 'Best Quality (Auto Merge)'}]
+            playable_formats = []
 
             for f in formats_raw:
                 format_id = str(f.get('format_id', ''))
                 ext = str(f.get('ext', '')).lower()
                 vcodec = f.get('vcodec', 'none')
                 acodec = f.get('acodec', 'none')
+                direct_url = f.get('url')
 
-                # Filter out storyboard frames and mhtml placeholders
-                if format_id.startswith('sb') or ext == 'mhtml' or (vcodec == 'none' and acodec == 'none'):
+                # Filter out preview storyboards, mhtml entries, and empty stream links
+                if format_id.startswith('sb') or ext == 'mhtml' or not direct_url:
                     continue
 
                 res = f.get('resolution') or (f"{f.get('height')}p" if f.get('height') else "Audio")
@@ -161,47 +85,36 @@ def get_formats():
                 fps_str = f" @ {int(fps)}fps" if fps else ""
 
                 if vcodec != 'none' and acodec != 'none':
-                    tag = "Video + Audio"
+                    tag = "Video + Audio (Direct Stream)"
                 elif vcodec != 'none':
                     tag = "Video Only"
                 else:
                     tag = "Audio Only"
 
-                label = f"{res}{fps_str} ({ext.upper()}) - {tag} [ID: {format_id}]"
-                formats.append({'format_id': format_id, 'label': label})
+                label = f"{res}{fps_str} ({ext.upper()}) - {tag}"
+                
+                playable_formats.append({
+                    'format_id': format_id,
+                    'label': label,
+                    'download_url': direct_url
+                })
 
-            if len(formats) == 1:
+            if not playable_formats:
                 return jsonify({
-                    'error': "No playable video formats were returned by YouTube.\n\n"
-                             "[Action Required] Run 'python sync.py' locally to refresh YouTube session cookies on Render."
+                    'error': "No playable streams returned.\n\n"
+                             "[Action Required] Run 'python sync.py' locally to refresh cookies on Render."
                 }), 400
 
             return jsonify({
                 'title': info.get('title', 'YouTube Video'),
-                'formats': formats
+                'formats': playable_formats
             })
+
     except Exception as e:
         err_msg = str(e)
         if "The page needs to be reloaded" in err_msg or "Requested format is not available" in err_msg:
             err_msg += "\n\n[Action Required] Render's IP address is flagged by YouTube. Run sync.py from your local machine to upload fresh browser cookies to Render."
         return jsonify({'error': err_msg}), 400
-
-@app.route('/download', methods=['POST'])
-def download():
-    data = request.get_json(silent=True) or {}
-    url = data.get('url') or request.form.get('url')
-    format_id = data.get('format_id') or request.form.get('format_id')
-
-    if not url:
-        return jsonify({'error': 'URL is required'}), 400
-
-    thread = threading.Thread(target=run_download, args=(url, format_id))
-    thread.start()
-    return jsonify({'status': 'started'})
-
-@app.route('/progress')
-def progress():
-    return jsonify(progress_data)
 
 @app.route('/update-cookies', methods=['POST'])
 def update_cookies():
