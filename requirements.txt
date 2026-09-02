@@ -1,5 +1,6 @@
 Flask
-yt-dlp[default]
-quickjs
 gunicorn
-static_ffmpeg
+yt-dlp[default]
+static-ffmpeg
+requests
+quickjs
