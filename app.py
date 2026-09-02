@@ -1,4 +1,4 @@
-import os
+kimport os
 import sys
 import glob
 import threading
@@ -71,19 +71,14 @@ def run_download(url):
         print(f"Using cookies from: {cookie_file}")
 
     ydl_opts = {
-        # Resilient format selector: tries separate streams first, falls back to pre-merged streams
-        'format': 'bv*[height<=1080]+ba/b[height<=1080]/b',
+        # Catch-all format selector: accepts best video+audio, best single file, or any available stream
+        'format': 'bv*+ba/b/best',
         'outtmpl': os.path.join(DOWNLOAD_FOLDER, '%(id)s.%(ext)s'),
         'merge_output_format': 'mp4',
         'progress_hooks': [progress_hook],
         'quiet': True,
         'no_warnings': False,
         'remote_components': ['ejs:github'],
-        'extractor_args': {
-            'youtube': {
-                'player_client': ['ios', 'android', 'mweb', 'web']
-            }
-        }
     }
 
     if cookie_file:
