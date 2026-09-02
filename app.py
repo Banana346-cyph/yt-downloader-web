@@ -1,4 +1,4 @@
-import os
+kimport os
 import sys
 import glob
 import threading
@@ -49,7 +49,6 @@ def get_base_ydl_opts():
         'quiet': True,
         'no_warnings': True,
         'remote_components': ['ejs:github'],
-        # Rotate mobile clients to bypass cloud server IP blocks during metadata extraction
         'extractor_args': {
             'youtube': {
                 'player_client': ['mweb', 'ios', 'android', 'web']
@@ -103,6 +102,7 @@ def run_download(url, format_id=None):
 
     ydl_opts = get_base_ydl_opts()
 
+    # Use explicit format or broad fallback chain
     if format_id and format_id != 'auto':
         ydl_format = f"{format_id}+bestaudio/best"
     else:
@@ -137,6 +137,9 @@ def get_formats():
         return jsonify({'error': 'URL is required'}), 400
 
     ydl_opts = get_base_ydl_opts()
+    # Bypass format requirements during extraction to return all raw streams
+    ydl_opts['format'] = 'all'
+
     try:
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
             info = ydl.extract_info(url, download=False)
