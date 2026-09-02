@@ -49,13 +49,14 @@ def get_base_ydl_opts():
         'quiet': True,
         'no_warnings': True,
         'remote_components': ['ejs:github'],
+        # Prefer iOS and Android clients to bypass web datacenter blocks
         'extractor_args': {
             'youtube': {
-                'player_client': ['mweb', 'ios', 'android', 'web']
+                'player_client': ['ios', 'android', 'mweb', 'web']
             }
         },
         'http_headers': {
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36'
+            'User-Agent': 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.5 Mobile/15E148 Safari/604.1'
         }
     }
     
@@ -102,11 +103,11 @@ def run_download(url, format_id=None):
 
     ydl_opts = get_base_ydl_opts()
 
-    # Use explicit format or broad fallback chain
+    # Formats fallback priority chain
     if format_id and format_id != 'auto':
-        ydl_format = f"{format_id}+bestaudio/best"
+        ydl_format = f"{format_id}+ba/bestvideo+bestaudio/{format_id}/best"
     else:
-        ydl_format = 'bv*+ba/b/best'
+        ydl_format = 'bv*[height<=1080]+ba/b[height<=1080]/bv*+ba/best'
 
     ydl_opts.update({
         'format': ydl_format,
@@ -137,8 +138,6 @@ def get_formats():
         return jsonify({'error': 'URL is required'}), 400
 
     ydl_opts = get_base_ydl_opts()
-    # Bypass format requirements during extraction to return all raw streams
-    ydl_opts['format'] = 'all'
 
     try:
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
@@ -148,11 +147,16 @@ def get_formats():
             formats = [{'format_id': 'auto', 'label': 'Best Quality (Auto Merge)'}]
 
             for f in formats_raw:
-                format_id = f.get('format_id')
-                ext = f.get('ext', '')
-                res = f.get('resolution') or (f"{f.get('height')}p" if f.get('height') else "Audio")
+                format_id = str(f.get('format_id', ''))
+                ext = str(f.get('ext', '')).lower()
                 vcodec = f.get('vcodec', 'none')
                 acodec = f.get('acodec', 'none')
+
+                # Filter out storyboard frames and mhtml placeholders
+                if format_id.startswith('sb') or ext == 'mhtml' or (vcodec == 'none' and acodec == 'none'):
+                    continue
+
+                res = f.get('resolution') or (f"{f.get('height')}p" if f.get('height') else "Audio")
                 fps = f.get('fps')
                 fps_str = f" @ {int(fps)}fps" if fps else ""
 
@@ -166,13 +170,19 @@ def get_formats():
                 label = f"{res}{fps_str} ({ext.upper()}) - {tag} [ID: {format_id}]"
                 formats.append({'format_id': format_id, 'label': label})
 
+            if len(formats) == 1:
+                return jsonify({
+                    'error': "No playable video formats were returned by YouTube.\n\n"
+                             "[Action Required] Run 'python sync.py' locally to refresh YouTube session cookies on Render."
+                }), 400
+
             return jsonify({
                 'title': info.get('title', 'YouTube Video'),
                 'formats': formats
             })
     except Exception as e:
         err_msg = str(e)
-        if "The page needs to be reloaded" in err_msg:
+        if "The page needs to be reloaded" in err_msg or "Requested format is not available" in err_msg:
             err_msg += "\n\n[Action Required] Render's IP address is flagged by YouTube. Run sync.py from your local machine to upload fresh browser cookies to Render."
         return jsonify({'error': err_msg}), 400
 
