@@ -62,8 +62,8 @@ def run_download(url):
             print(f"Error copying secret cookies: {e}")
 
     ydl_opts = {
-        # Cap video resolution at 1080p and prioritize direct stream merging without re-encoding
-        'format': 'bestvideo[height<=1080][ext=mp4]+bestaudio[ext=m4a]/bestvideo[height<=1080]+bestaudio/best[height<=1080]',
+        # Relaxed format string allowing yt-dlp to grab any available 1080p stream for FFmpeg merging
+        'format': 'bestvideo[height<=1080]+bestaudio/best[height<=1080]/best',
         'outtmpl': os.path.join(DOWNLOAD_FOLDER, '%(title)s.%(ext)s'),
         'merge_output_format': 'mp4',
 
