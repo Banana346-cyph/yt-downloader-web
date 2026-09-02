@@ -1,5 +1,5 @@
-flask
-requests
-yt-dlp
-static-ffmpeg
+Flask
+yt-dlp[default]
+quickjs
 gunicorn
+static_ffmpeg

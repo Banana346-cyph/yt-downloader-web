@@ -26,6 +26,7 @@ DOWNLOAD_FOLDER = os.path.join(os.getcwd(), 'downloads')
 os.makedirs(DOWNLOAD_FOLDER, exist_ok=True)
 
 download_status = {}
+
 def progress_hook(d):
     """Update progress percentage during download."""
     if d['status'] == 'downloading':
@@ -62,13 +63,13 @@ def run_download(url):
             print(f"Error copying secret cookies: {e}")
 
     ydl_opts = {
-        # Flexible format selector with MP4 merging
+        # Universal stream matching targeting 1080p with MP4 output merging
         'format': 'bv*+ba/b',
         'format_sort': ['res:1080', 'ext:mp4:m4a'],
         'outtmpl': os.path.join(DOWNLOAD_FOLDER, '%(title)s.%(ext)s'),
         'merge_output_format': 'mp4',
 
-        # Prioritize tvembedded to bypass web player bot verification & reload blocks
+        # Client emulation args to bypass YouTube bot detection & "page reload" errors
         'extractor_args': {
             'youtube': {
                 'player_client': ['tvembedded', 'ios', 'mweb', 'android']
