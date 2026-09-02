@@ -71,17 +71,17 @@ def run_download(url):
         print(f"Using cookies from: {cookie_file}")
 
     ydl_opts = {
-        'format': 'bestvideo[height<=1080]+bestaudio/best[height<=1080]/best',
+        # Resilient format selector: tries separate streams first, falls back to pre-merged streams
+        'format': 'bv*[height<=1080]+ba/b[height<=1080]/b',
         'outtmpl': os.path.join(DOWNLOAD_FOLDER, '%(id)s.%(ext)s'),
         'merge_output_format': 'mp4',
         'progress_hooks': [progress_hook],
         'quiet': True,
         'no_warnings': False,
         'remote_components': ['ejs:github'],
-        # Exclude broken tv_downgraded client to fix "The page needs to be reloaded"
         'extractor_args': {
             'youtube': {
-                'player_client': ['default', '-tv_downgraded', 'web_embedded']
+                'player_client': ['ios', 'android', 'mweb', 'web']
             }
         }
     }
@@ -117,7 +117,6 @@ def index():
 
 @app.route('/download', methods=['POST'])
 def download():
-    # Supports JSON body payloads and standard HTML form data
     data = request.get_json(silent=True) or {}
     url = data.get('url') or request.form.get('url')
     
