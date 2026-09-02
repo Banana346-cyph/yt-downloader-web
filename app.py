@@ -1,4 +1,4 @@
-kimport os
+import os
 import sys
 import glob
 import threading
@@ -44,6 +44,31 @@ def find_cookie_file():
     
     return None
 
+def get_base_ydl_opts():
+    opts = {
+        'quiet': True,
+        'no_warnings': True,
+        'remote_components': ['ejs:github'],
+    }
+    cookie_file = find_cookie_file()
+    if cookie_file:
+        opts['cookiefile'] = cookie_file
+
+    deno_exe = None
+    for candidate in [
+        os.path.join(os.getcwd(), 'deno', 'bin', 'deno'),
+        os.path.expanduser('~/.deno/bin/deno'),
+        '/opt/render/.deno/bin/deno'
+    ]:
+        if os.path.isfile(candidate):
+            deno_exe = candidate
+            break
+
+    if deno_exe:
+        opts['js_runtimes'] = {'deno': {'path': deno_exe}}
+
+    return opts
+
 def progress_hook(d):
     global progress_data
     if d['status'] == 'downloading':
@@ -60,45 +85,29 @@ def progress_hook(d):
         progress_data['status'] = 'finished'
         progress_data['progress'] = 100.0
 
-def run_download(url):
+def run_download(url, format_id=None):
     global progress_data
     progress_data['status'] = 'starting'
     progress_data['progress'] = 0
     progress_data['error'] = None
 
-    cookie_file = find_cookie_file()
-    if cookie_file:
-        print(f"Using cookies from: {cookie_file}")
+    ydl_opts = get_base_ydl_opts()
 
-    ydl_opts = {
-        # Catch-all format selector: accepts best video+audio, best single file, or any available stream
-        'format': 'bv*+ba/b/best',
+    # If user selected a specific video format ID, attempt merging with best audio
+    if format_id and format_id != 'auto':
+        ydl_format = f"{format_id}+bestaudio/best"
+    else:
+        ydl_format = 'bv*+ba/b/best'
+
+    ydl_opts.update({
+        'format': ydl_format,
         'outtmpl': os.path.join(DOWNLOAD_FOLDER, '%(id)s.%(ext)s'),
         'merge_output_format': 'mp4',
         'progress_hooks': [progress_hook],
-        'quiet': True,
-        'no_warnings': False,
-        'remote_components': ['ejs:github'],
-    }
-
-    if cookie_file:
-        ydl_opts['cookiefile'] = cookie_file
-
-    deno_exe = None
-    for candidate in [
-        os.path.join(os.getcwd(), 'deno', 'bin', 'deno'),
-        os.path.expanduser('~/.deno/bin/deno'),
-        '/opt/render/.deno/bin/deno'
-    ]:
-        if os.path.isfile(candidate):
-            deno_exe = candidate
-            break
-
-    if deno_exe:
-        ydl_opts['js_runtimes'] = {'deno': {'path': deno_exe}}
+    })
 
     try:
-        print(f"Starting download for: {url}")
+        print(f"Starting download for {url} with format selection: {ydl_format}")
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
             ydl.download([url])
     except Exception as e:
@@ -110,15 +119,58 @@ def run_download(url):
 def index():
     return render_template('index.html')
 
+@app.route('/get-formats', methods=['POST'])
+def get_formats():
+    data = request.get_json(silent=True) or {}
+    url = data.get('url') or request.form.get('url')
+
+    if not url:
+        return jsonify({'error': 'URL is required'}), 400
+
+    ydl_opts = get_base_ydl_opts()
+    try:
+        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+            info = ydl.extract_info(url, download=False)
+            formats_raw = info.get('formats', [])
+            
+            formats = [{'format_id': 'auto', 'label': 'Best Quality (Auto Merge)'}]
+
+            for f in formats_raw:
+                format_id = f.get('format_id')
+                ext = f.get('ext', '')
+                res = f.get('resolution') or (f"{f.get('height')}p" if f.get('height') else "Audio")
+                vcodec = f.get('vcodec', 'none')
+                acodec = f.get('acodec', 'none')
+                fps = f.get('fps')
+                fps_str = f" @ {int(fps)}fps" if fps else ""
+
+                if vcodec != 'none' and acodec != 'none':
+                    tag = "Video + Audio"
+                elif vcodec != 'none':
+                    tag = "Video Only"
+                else:
+                    tag = "Audio Only"
+
+                label = f"{res}{fps_str} ({ext.upper()}) - {tag} [ID: {format_id}]"
+                formats.append({'format_id': format_id, 'label': label})
+
+            return jsonify({
+                'title': info.get('title', 'YouTube Video'),
+                'formats': formats
+            })
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
 @app.route('/download', methods=['POST'])
 def download():
     data = request.get_json(silent=True) or {}
     url = data.get('url') or request.form.get('url')
-    
+    format_id = data.get('format_id') or request.form.get('format_id')
+
     if not url:
         return jsonify({'error': 'URL is required'}), 400
 
-    thread = threading.Thread(target=run_download, args=(url,))
+    thread = threading.Thread(target=run_download, args=(url, format_id))
     thread.start()
     return jsonify({'status': 'started'})
 
@@ -131,7 +183,7 @@ def update_cookies():
     try:
         data = request.get_json(silent=True) or {}
         cookie_text = data.get('cookies') or request.data.decode('utf-8')
-        
+
         if not cookie_text:
             return jsonify({'error': 'No cookie content provided'}), 400
 

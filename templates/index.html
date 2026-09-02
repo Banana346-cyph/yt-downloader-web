@@ -3,882 +3,288 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>StreamFetch - Next-Gen Downloader</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/EffectComposer.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/RenderPass.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/shaders/CopyShader.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/shaders/LuminosityHighPassShader.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/ShaderPass.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/UnrealBloomPass.js"></script>
-
+    <title>YouTube Downloader</title>
     <style>
-        :root {
-            --bg-color: #030303;
-            --text-main: #ffffff;
-            --text-muted: #999999;
-            --pill-bg: rgba(255, 255, 255, 0.08);
-            --pill-border: rgba(255, 255, 255, 0.15);
-            --pill-hover: rgba(255, 255, 255, 0.18);
-            --accent-white: #ffffff;
-            --accent-black: #000000;
-        }
-
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-        }
-
         body {
-            background-color: var(--bg-color);
-            color: var(--text-main);
-            min-height: 100vh;
-            overflow-x: hidden;
+            font-family: Arial, sans-serif;
+            background-color: #181818;
+            color: #ffffff;
             display: flex;
-            flex-direction: column;
-            justify-content: space-between;
-            user-select: none;
-        }
-
-        #bgCanvas {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100vw;
-            height: 100vh;
-            z-index: 1;
-            cursor: grab;
-        }
-
-        #bgCanvas:active {
-            cursor: grabbing;
-        }
-
-        nav {
-            position: relative;
-            z-index: 10;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 24px 48px;
-            width: 100%;
-        }
-
-        .logo {
-            font-size: 1.25rem;
-            font-weight: 700;
-            letter-spacing: 2px;
-            text-transform: uppercase;
-        }
-
-        .nav-links {
-            display: flex;
-            gap: 32px;
-            list-style: none;
-        }
-
-        .nav-links a {
-            color: var(--text-muted);
-            text-decoration: none;
-            font-size: 0.875rem;
-            font-weight: 400;
-            transition: color 0.2s ease;
-            cursor: pointer;
-        }
-
-        .nav-links a:hover {
-            color: var(--text-main);
-        }
-
-        .nav-actions {
-            display: flex;
-            gap: 12px;
-        }
-
-        .pill-btn-sm {
-            padding: 8px 18px;
-            border-radius: 999px;
-            background: var(--pill-bg);
-            border: 1px solid var(--pill-border);
-            color: var(--text-main);
-            font-size: 0.8rem;
-            cursor: pointer;
-            text-decoration: none;
-            transition: all 0.2s ease;
-        }
-
-        .pill-btn-sm:hover {
-            background: var(--pill-hover);
-        }
-
-        main {
-            position: relative;
-            z-index: 10;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
             justify-content: center;
-            text-align: center;
-            padding: 0 20px;
-            margin: auto 0;
-            pointer-events: none;
-        }
-
-        main * {
-            pointer-events: auto;
-        }
-
-        h1 {
-            font-size: 3.5rem;
-            font-weight: 500;
-            letter-spacing: -1px;
-            margin-bottom: 16px;
-            max-width: 800px;
-            line-height: 1.15;
-        }
-
-        p.subtitle {
-            color: var(--text-muted);
-            font-size: 1.05rem;
-            max-width: 520px;
-            line-height: 1.5;
-            margin-bottom: 36px;
-            font-weight: 300;
-        }
-
-        .form-container {
-            width: 100%;
-            max-width: 540px;
-            display: flex;
-            flex-direction: column;
             align-items: center;
-            gap: 16px;
+            height: 100vh;
+            margin: 0;
         }
 
-        input[type="url"] {
-            width: 100%;
-            padding: 16px 24px;
-            border-radius: 999px;
-            background: rgba(18, 18, 20, 0.75);
-            border: 1px solid rgba(255, 255, 255, 0.18);
-            backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px);
-            color: var(--text-main);
-            font-size: 0.95rem;
-            outline: none;
-            transition: all 0.2s ease;
+        .container {
+            background-color: #212121;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+            width: 90%;
+            max-width: 500px;
             text-align: center;
         }
 
-        input[type="url"]:focus {
-            border-color: rgba(255, 255, 255, 0.4);
-            box-shadow: 0 0 20px rgba(255, 255, 255, 0.1);
+        input[type="text"] {
+            width: 100%;
+            padding: 12px;
+            margin-bottom: 15px;
+            border-radius: 6px;
+            border: 1px solid #333;
+            background-color: #121212;
+            color: #fff;
+            box-sizing: border-box;
         }
 
-        input[type="url"]::placeholder {
-            color: #555555;
-        }
-
-        .button-group {
-            display: flex;
-            gap: 14px;
-        }
-
-        .btn-primary {
-            padding: 14px 32px;
-            border-radius: 999px;
-            background: var(--accent-white);
-            color: var(--accent-black);
+        button {
+            background-color: #ff0000;
+            color: white;
             border: none;
-            font-size: 0.9rem;
-            font-weight: 600;
+            padding: 12px 20px;
+            border-radius: 6px;
             cursor: pointer;
-            transition: all 0.2s ease;
-        }
-
-        .btn-primary:hover {
-            opacity: 0.9;
-            transform: translateY(-1px);
-        }
-
-        .btn-primary:disabled {
-            opacity: 0.4;
-            cursor: not-allowed;
-            transform: none;
-        }
-
-        .btn-secondary {
-            padding: 14px 32px;
-            border-radius: 999px;
-            background: var(--pill-bg);
-            border: 1px solid var(--pill-border);
-            color: var(--text-main);
-            font-size: 0.9rem;
-            font-weight: 500;
-            cursor: pointer;
-            text-decoration: none;
-            transition: all 0.2s ease;
-            display: inline-block;
-        }
-
-        .btn-secondary:hover {
-            background: var(--pill-hover);
-        }
-
-        .progress-box {
-            display: none;
+            font-size: 16px;
+            font-weight: bold;
             width: 100%;
-            max-width: 460px;
-            margin-top: 24px;
-            padding: 20px;
-            background: rgba(18, 18, 20, 0.6);
-            border: 1px solid var(--pill-border);
-            border-radius: 20px;
-            backdrop-filter: blur(16px);
-            -webkit-backdrop-filter: blur(16px);
         }
 
-        .progress-meta {
-            display: flex;
-            justify-content: space-between;
-            font-size: 0.85rem;
-            color: var(--text-muted);
-            margin-bottom: 10px;
+        button:hover {
+            background-color: #cc0000;
         }
 
-        .progress-bar-bg {
-            width: 100%;
-            height: 4px;
-            background: rgba(255, 255, 255, 0.1);
-            border-radius: 4px;
-            overflow: hidden;
-        }
-
-        .progress-bar-fill {
-            height: 100%;
-            width: 0%;
-            background: var(--accent-white);
-            border-radius: 4px;
-            transition: width 0.3s ease;
-        }
-
-        .status-msg {
-            margin-top: 10px;
-            font-size: 0.8rem;
-            color: var(--text-muted);
-            word-break: break-all;
-        }
-
+        /* Modal Overlay */
         .modal-overlay {
             display: none;
             position: fixed;
-            top: 0; left: 0; width: 100vw; height: 100vh;
-            background: rgba(0, 0, 0, 0.75);
-            backdrop-filter: blur(8px);
-            z-index: 100;
-            align-items: center;
-            justify-content: center;
-            padding: 20px;
-        }
-
-        .modal-card {
-            background: #0d0d10;
-            border: 1px solid var(--pill-border);
-            border-radius: 24px;
-            padding: 32px;
-            max-width: 480px;
+            top: 0;
+            left: 0;
             width: 100%;
-            box-shadow: 0 20px 50px rgba(0,0,0,0.9);
-            position: relative;
-            text-align: center;
-        }
-
-        .modal-card.bounce-in {
-            animation: modalBounce 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-        }
-
-        @keyframes modalBounce {
-            0% { transform: scale(0.7); opacity: 0; }
-            100% { transform: scale(1); opacity: 1; }
-        }
-
-        .anim-canvas-container {
-            width: 100%;
-            height: 130px;
-            display: flex;
-            align-items: center;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
             justify-content: center;
-            margin-bottom: 12px;
+            align-items: center;
+            z-index: 1000;
         }
 
-        .anim-canvas-container canvas {
-            max-width: 100%;
-            max-height: 100%;
+        /* Modal Popup with Bounce Effect */
+        .modal-box {
+            background-color: #282828;
+            padding: 25px;
+            border-radius: 12px;
+            width: 90%;
+            max-width: 450px;
+            box-shadow: 0 5px 25px rgba(0, 0, 0, 0.8);
+            animation: bounceIn 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55);
         }
 
-        .modal-content-wrapper {
-            opacity: 0;
-            transition: opacity 0.5s ease-in-out;
+        @keyframes bounceIn {
+            0% { opacity: 0; transform: scale(0.3); }
+            50% { opacity: 1; transform: scale(1.05); }
+            70% { transform: scale(0.9); }
+            100% { transform: scale(1); }
         }
 
-        .modal-content-wrapper.visible {
-            opacity: 1;
+        select {
+            width: 100%;
+            padding: 10px;
+            margin: 15px 0;
+            border-radius: 6px;
+            background: #121212;
+            color: #fff;
+            border: 1px solid #444;
         }
 
-        .modal-title {
-            font-size: 1.35rem;
-            font-weight: 600;
-            margin-bottom: 10px;
-            color: var(--accent-white);
+        /* Copyable Error Box */
+        .error-container {
+            display: none;
+            margin-top: 20px;
+            background: #2d1313;
+            border: 1px solid #ff4d4d;
+            border-radius: 8px;
+            padding: 12px;
+            text-align: left;
         }
 
-        .modal-body {
-            font-size: 0.9rem;
-            color: var(--text-muted);
-            line-height: 1.6;
-            margin-bottom: 24px;
+        textarea.error-box {
+            width: 100%;
+            height: 100px;
+            background: #1a0808;
+            color: #ff9999;
+            border: 1px solid #ff4d4d;
+            border-radius: 4px;
+            font-family: monospace;
+            font-size: 12px;
+            resize: vertical;
+            box-sizing: border-box;
+            margin-bottom: 8px;
         }
 
-        .modal-close {
-            padding: 8px 24px;
-            border-radius: 999px;
-            background: var(--pill-bg);
-            border: 1px solid var(--pill-border);
-            color: var(--text-main);
-            cursor: pointer;
-            font-size: 0.85rem;
-            transition: all 0.2s ease;
+        .copy-btn {
+            background-color: #444;
+            font-size: 12px;
+            padding: 6px 12px;
+            width: auto;
         }
 
-        .modal-close:hover {
-            background: var(--pill-hover);
+        .copy-btn:hover {
+            background-color: #666;
         }
 
-        footer {
-            position: relative;
-            z-index: 10;
-            padding: 24px;
-            text-align: center;
-            font-size: 0.8rem;
-            color: #444;
-            pointer-events: none;
+        .progress-bar {
+            width: 100%;
+            background-color: #333;
+            border-radius: 6px;
+            margin-top: 15px;
+            overflow: hidden;
+            display: none;
         }
 
-        @media (max-width: 768px) {
-            nav { padding: 20px; }
-            .nav-links { display: none; }
-            h1 { font-size: 2.4rem; }
+        .progress-fill {
+            height: 18px;
+            background-color: #ff0000;
+            width: 0%;
+            transition: width 0.3s;
         }
     </style>
 </head>
 <body>
 
-<canvas id="bgCanvas"></canvas>
+<div class="container">
+    <h2>YouTube Downloader</h2>
+    <input type="text" id="videoUrl" placeholder="Paste YouTube Link Here">
+    <button onclick="fetchFormats()">Fetch Options</button>
 
-<nav>
-    <div class="logo">STREAMFETCH</div>
-    <ul class="nav-links">
-        <li><a onclick="showAnimatedInfo('engine', 'Engine', 'StreamFetch uses an optimized Python backend powered by yt-dlp and FFmpeg to parse media links, extract streams asynchronously, and merge audio/video tracks on the fly.')">Engine</a></li>
-        <li><a onclick="showAnimatedInfo('speed', 'Speed', 'Our processing pipeline runs async socket buffers directly to Render memory, bypassing slow disk writes to maximize transfer speeds up to your full bandwidth cap.')">Speed</a></li>
-        <li><a onclick="showAnimatedInfo('formats', 'Formats', 'Currently supporting high-definition 1080p MP4 with merged audio. Support for 4K resolutions, 720p, and standalone MP3 audio extraction will be added soon!')">Formats</a></li>
-        <li><a onclick="showAnimatedInfo('api', 'API', 'The StreamFetch API allows developers to automate video processing programmatically. Send POST requests to `/download` and check status via `/progress` to integrate media fetching into your own apps.')">API</a></li>
-    </ul>
-    <div class="nav-actions">
-        <a onclick="showAnimatedInfo('portal', 'Portal', 'The User Portal is currently in development. Soon you will be able to save your download history, manage custom presets, and integrate direct cloud storage exports.')" class="pill-btn-sm">Portal</a>
-        <a onclick="showAnimatedInfo('app', 'App', 'The StreamFetch Native Desktop & Mobile App is coming soon. Enjoy system-wide hotkeys, background download queues, and instant clipboard link detection.')" class="pill-btn-sm" style="background: rgba(255,255,255,0.2);">App</a>
+    <div class="progress-bar" id="progressBar">
+        <div class="progress-fill" id="progressFill"></div>
     </div>
-</nav>
+    <p id="statusText"></p>
 
-<main>
-    <h1>Media at the speed of thought</h1>
-    <p class="subtitle">Extract 1080p video instantly with remote EJS stream processing without leaving the chat.</p>
-
-    <div class="form-container">
-        <form id="downloadForm" style="width: 100%;">
-            <div class="input-pill-wrapper">
-                <input type="url" id="videoUrl" placeholder="Paste YouTube URL..." required autocomplete="off">
-            </div>
-            <div class="button-group" style="justify-content: center; margin-top: 20px;">
-                <button type="submit" id="submitBtn" class="btn-primary">Download 1080p</button>
-            </div>
-        </form>
-
-        <div id="progressCard" class="progress-box">
-            <div class="progress-meta">
-                <span id="statusLabel">Processing...</span>
-                <span id="percentLabel">0%</span>
-            </div>
-            <div class="progress-bar-bg">
-                <div id="progressBar" class="progress-bar-fill"></div>
-            </div>
-            <div id="statusMsg" class="status-msg"></div>
-            <div style="margin-top: 16px;">
-                <a id="downloadBtn" href="/get-file" class="btn-secondary" style="display:none; width: 100%;">Save to Device</a>
-            </div>
-        </div>
+    <!-- Error Container -->
+    <div class="error-container" id="errorContainer">
+        <label style="color:#ff4d4d; font-weight:bold; font-size:12px;">Error Log:</label>
+        <textarea id="errorText" class="error-box" readonly></textarea>
+        <button class="copy-btn" onclick="copyError()">Copy Error Log</button>
     </div>
-</main>
+</div>
 
-<footer>STREAMFETCH PLATFORM</footer>
-
-<div id="infoModal" class="modal-overlay">
-    <div id="modalCard" class="modal-card">
-        <div id="animContainer" class="anim-canvas-container">
-            <canvas id="animCanvas" width="220" height="120"></canvas>
-        </div>
-        <div id="modalContentWrapper" class="modal-content-wrapper">
-            <div id="modalTitle" class="modal-title">Info</div>
-            <div id="modalBody" class="modal-body">Description...</div>
-        </div>
-        <button class="modal-close" onclick="closeModal()">Close</button>
+<!-- Format Modal -->
+<div class="modal-overlay" id="formatModal">
+    <div class="modal-box">
+        <h3 id="modalTitle" style="margin-top:0; font-size:16px;">Select Quality</h3>
+        <select id="formatSelect"></select>
+        <button onclick="startDownload()">Download Selected Format</button>
     </div>
 </div>
 
 <script>
-    // -------------------------------------------------------------
-    // 3D Wheel Background with UnrealBloomPass Post-Processing Ring Light
-    // -------------------------------------------------------------
-    const canvas = document.getElementById('bgCanvas');
-    const scene = new THREE.Scene();
-    const camera = new THREE.PerspectiveCamera(40, window.innerWidth / window.innerHeight, 0.1, 1000);
-    const renderer = new THREE.WebGLRenderer({ canvas: canvas, alpha: true, antialias: true, powerPreference: "high-performance" });
-
-    renderer.setSize(window.innerWidth, window.innerHeight);
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-    renderer.toneMapping = THREE.ACESFilmicToneMapping;
-    renderer.toneMappingExposure = 1.2;
-
-    // Post-Processing Composer setup for Bloom & Glare
-    const composer = new THREE.EffectComposer(renderer);
-    const renderPass = new THREE.RenderPass(scene, camera);
-    composer.addPass(renderPass);
-
-    const bloomPass = new THREE.UnrealBloomPass(
-        new THREE.Vector2(window.innerWidth, window.innerHeight),
-        1.35,  // Bloom Strength
-        0.4,   // Bloom Radius
-        0.80   // Bloom Threshold (targets pure white emissive inner ring)
-    );
-    composer.addPass(bloomPass);
-
-    const wheelGroup = new THREE.Group();
-    const bladeCount = 64;
-    const torusMainRadius = 4.2;
-    const bladeRadius = 1.1;
-
-    const bladeMaterial = new THREE.MeshStandardMaterial({
-        color: 0x242730,
-        metalness: 0.85,
-        roughness: 0.25
-    });
-
-    for (let i = 0; i < bladeCount; i++) {
-        const angle = (i / bladeCount) * Math.PI * 2;
-        const geometry = new THREE.CylinderGeometry(bladeRadius, bladeRadius, 0.04, 24);
-        const blade = new THREE.Mesh(geometry, bladeMaterial);
-
-        blade.position.x = Math.cos(angle) * torusMainRadius;
-        blade.position.z = Math.sin(angle) * torusMainRadius;
-        blade.rotation.y = -angle;
-        blade.rotation.z = Math.PI / 2;
-
-        wheelGroup.add(blade);
-    }
-
-    // Outer Rim Structure
-    const innerRimGeo = new THREE.TorusGeometry(torusMainRadius, 0.05, 16, 80);
-    const innerRimMat = new THREE.MeshStandardMaterial({ color: 0x555a68, metalness: 0.9, roughness: 0.2 });
-    const innerRim = new THREE.Mesh(innerRimGeo, innerRimMat);
-    innerRim.rotation.x = Math.PI / 2;
-    wheelGroup.add(innerRim);
-
-    // -------------------------------------------------------------
-    // INNER GLOWING CORE RING (Triggers UnrealBloomPass Glare)
-    // -------------------------------------------------------------
-    const glowRingGeo = new THREE.TorusGeometry(torusMainRadius * 0.98, 0.035, 32, 120);
-    const glowRingMat = new THREE.MeshBasicMaterial({
-        color: 0xffffff,
-    });
-    const glowRing = new THREE.Mesh(glowRingGeo, glowRingMat);
-    glowRing.rotation.x = Math.PI / 2;
-    wheelGroup.add(glowRing);
-
-    // Initial 3D Orientation
-    wheelGroup.rotation.x = Math.PI * 0.35;
-    wheelGroup.rotation.y = Math.PI * 0.10;
-    scene.add(wheelGroup);
-
-    // Lighting
-    const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
-    scene.add(ambientLight);
-
-    const mainLight = new THREE.DirectionalLight(0xffffff, 2.2);
-    mainLight.position.set(8, 12, 10);
-    scene.add(mainLight);
-
-    const rimLight = new THREE.DirectionalLight(0x64748b, 1.2);
-    rimLight.position.set(-8, -6, -4);
-    scene.add(rimLight);
-
-    camera.position.z = 14;
-
-    // -------------------------------------------------------------
-    // Drag Controls & Auto-Rotate Timer
-    // -------------------------------------------------------------
-    let isDragging = false;
-    let previousMousePosition = { x: 0, y: 0 };
-    let autoRotate = true;
-    let autoRotateTimer = null;
-
-    function triggerUserInteraction() {
-        autoRotate = false;
-        clearTimeout(autoRotateTimer);
-        autoRotateTimer = setTimeout(() => {
-            autoRotate = true;
-        }, 3000);
-    }
-
-    window.addEventListener('pointerdown', (e) => {
-        if (e.target.closest('nav') || e.target.closest('main') || e.target.closest('.modal-card')) return;
-        isDragging = true;
-        previousMousePosition = { x: e.clientX, y: e.clientY };
-        triggerUserInteraction();
-    });
-
-    window.addEventListener('pointermove', (e) => {
-        if (!isDragging) return;
-        const deltaX = e.clientX - previousMousePosition.x;
-        const deltaY = e.clientY - previousMousePosition.y;
-
-        wheelGroup.rotation.y += deltaX * 0.005;
-        wheelGroup.rotation.x += deltaY * 0.005;
-
-        previousMousePosition = { x: e.clientX, y: e.clientY };
-        triggerUserInteraction();
-    });
-
-    window.addEventListener('pointerup', () => { isDragging = false; });
-
-    function animateBg() {
-        requestAnimationFrame(animateBg);
-        if (autoRotate) {
-            wheelGroup.rotation.z += 0.0025;
-            wheelGroup.rotation.y += 0.0008;
-        }
-
-        composer.render();
-    }
-    animateBg();
-
-    window.addEventListener('resize', () => {
-        camera.aspect = window.innerWidth / window.innerHeight;
-        camera.updateProjectionMatrix();
-        renderer.setSize(window.innerWidth, window.innerHeight);
-        composer.setSize(window.innerWidth, window.innerHeight);
-    });
-
-    // -------------------------------------------------------------
-    // Modal Canvas Animations (Holds/Loops Final Stage Continuously)
-    // -------------------------------------------------------------
-    const aCanvas = document.getElementById('animCanvas');
-    const ctx = aCanvas.getContext('2d');
-    let animReqId = null;
-    let animStartTime = null;
-    let textRevealTimer = null;
-
-    function showAnimatedInfo(type, title, bodyText) {
-        const modal = document.getElementById('infoModal');
-        const modalCard = document.getElementById('modalCard');
-        const contentWrapper = document.getElementById('modalContentWrapper');
-        const animContainer = document.getElementById('animContainer');
-
-        document.getElementById('modalTitle').textContent = title;
-        document.getElementById('modalBody').textContent = bodyText;
-
-        contentWrapper.classList.remove('visible');
-        modalCard.classList.remove('bounce-in');
-
-        if (type === 'portal' || type === 'app') {
-            animContainer.style.display = 'none';
-            contentWrapper.classList.add('visible');
-            modalCard.classList.add('bounce-in');
-        } else {
-            animContainer.style.display = 'flex';
-            startCanvasAnimation(type);
-            
-            clearTimeout(textRevealTimer);
-            textRevealTimer = setTimeout(() => {
-                contentWrapper.classList.add('visible');
-            }, 1250);
-        }
-
-        modal.style.display = 'flex';
-    }
-
-    function closeModal() {
-        document.getElementById('infoModal').style.display = 'none';
-        if (animReqId) cancelAnimationFrame(animReqId);
-        clearTimeout(textRevealTimer);
-        ctx.clearRect(0, 0, aCanvas.width, aCanvas.height);
-    }
-
-    function startCanvasAnimation(type) {
-        if (animReqId) cancelAnimationFrame(animReqId);
-        animStartTime = performance.now();
-
-        function renderLoop(now) {
-            const elapsed = (now - animStartTime) / 1000;
-
-            ctx.clearRect(0, 0, aCanvas.width, aCanvas.height);
-
-            if (type === 'engine') drawEngineAnimation(elapsed);
-            else if (type === 'speed') drawSpeedAnimation(elapsed);
-            else if (type === 'formats') drawFormatsAnimation(elapsed);
-            else if (type === 'api') drawApiAnimation(elapsed);
-
-            animReqId = requestAnimationFrame(renderLoop);
-        }
-        animReqId = requestAnimationFrame(renderLoop);
-    }
-
-    function drawEngineAnimation(t) {
-        const cx = 110, cy = 60;
-
-        ctx.strokeStyle = '#ffffff';
-        ctx.lineWidth = 2;
-        ctx.strokeRect(cx - 35, cy - 30, 70, 48);
-        ctx.strokeRect(cx - 10, cy + 18, 20, 10);
-        ctx.beginPath();
-        ctx.moveTo(cx - 25, cy + 28); ctx.lineTo(cx + 25, cy + 28);
-        ctx.stroke();
-
-        ctx.fillStyle = '#888888';
-        const lineOffset = (t * 20) % 12;
-        ctx.fillRect(cx - 25, cy - 20 + (lineOffset % 12), 30, 2);
-        ctx.fillRect(cx - 25, cy - 12 + ((lineOffset + 4) % 12), 45, 2);
-        ctx.fillRect(cx - 25, cy - 4 + ((lineOffset + 8) % 12), 20, 2);
-
-        const sparkCount = 6;
-        for (let i = 0; i < sparkCount; i++) {
-            const angle = (i / sparkCount) * Math.PI * 2 + t * 4;
-            const dist = 45 + Math.sin(t * 15 + i) * 6;
-            const sx = cx + Math.cos(angle) * dist;
-            const sy = cy + Math.sin(angle) * dist;
-
-            ctx.strokeStyle = (Math.floor(t * 20 + i) % 2 === 0) ? '#ffffff' : '#666666';
-            ctx.beginPath();
-            ctx.moveTo(sx, sy);
-            ctx.lineTo(sx + (Math.random() - 0.5) * 12, sy + (Math.random() - 0.5) * 12);
-            ctx.stroke();
-        }
-    }
-
-    function drawSpeedAnimation(t) {
-        const cx = 110, cy = 70, r = 42;
-
-        ctx.strokeStyle = '#444444';
-        ctx.lineWidth = 4;
-        ctx.beginPath();
-        ctx.arc(cx, cy, r, Math.PI, 0);
-        ctx.stroke();
-
-        const progress = Math.min(1.0, Math.pow(Math.min(t, 2.2) / 2.2, 2.5));
-        const needleAngle = Math.PI + progress * Math.PI;
-
-        ctx.strokeStyle = '#ffffff';
-        ctx.beginPath();
-        ctx.arc(cx, cy, r, Math.PI, needleAngle);
-        ctx.stroke();
-
-        ctx.save();
-        ctx.translate(cx, cy);
-        ctx.rotate(needleAngle);
-        ctx.strokeStyle = '#ffffff';
-        ctx.lineWidth = 3;
-        ctx.beginPath();
-        ctx.moveTo(0, 0); ctx.lineTo(r - 6, 0);
-        ctx.stroke();
-        ctx.restore();
-
-        ctx.fillStyle = '#ffffff';
-        ctx.beginPath();
-        ctx.arc(cx, cy, 5, 0, Math.PI * 2);
-        ctx.fill();
-
-        if (progress >= 0.85) {
-            const fireIntensity = (progress - 0.85) / 0.15;
-            for (let i = 0; i < 8; i++) {
-                const fx = cx + r + (Math.random() - 0.5) * 16;
-                const fy = cy - (Math.random() * 25 * fireIntensity);
-                ctx.fillStyle = Math.random() > 0.4 ? '#ffffff' : '#777777';
-                ctx.beginPath();
-                ctx.arc(fx, fy, Math.random() * 3 + 1, 0, Math.PI * 2);
-                ctx.fill();
-            }
-        }
-    }
-
-    function drawFormatsAnimation(t) {
-        const cx = 110, cy = 60;
-        const formats = ['4K', 'MP3', '720p', '1080p'];
-        
-        let index;
-        let shift = 0;
-
-        if (t < 1.8) {
-            index = Math.floor(t * 5) % formats.length;
-            shift = Math.sin(t * 12) * 6;
-        } else {
-            index = 3;
-            shift = Math.sin(t * 4) * 1.5;
-        }
-
-        ctx.fillStyle = '#222226';
-        ctx.strokeStyle = '#444444';
-        ctx.lineWidth = 1;
-        ctx.fillRect(cx - 38 + shift, cy - 26, 76, 52);
-        ctx.strokeRect(cx - 38 + shift, cy - 26, 76, 52);
-
-        ctx.fillStyle = '#0f0f13';
-        ctx.strokeStyle = '#ffffff';
-        ctx.lineWidth = 2;
-        ctx.fillRect(cx - 35, cy - 22, 70, 44);
-        ctx.strokeRect(cx - 35, cy - 22, 70, 44);
-
-        ctx.fillStyle = '#ffffff';
-        ctx.font = 'bold 15px Inter, sans-serif';
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'middle';
-        ctx.fillText(formats[index], cx, cy);
-    }
-
-    function drawApiAnimation(t) {
-        const cy = 60;
-        const nodeA = 50, nodeB = 170;
-
-        ctx.strokeStyle = '#444444';
-        ctx.lineWidth = 2;
-        ctx.beginPath();
-        ctx.moveTo(nodeA, cy); ctx.lineTo(nodeB, cy);
-        ctx.stroke();
-
-        ctx.fillStyle = '#18181c';
-        ctx.strokeStyle = '#ffffff';
-        ctx.lineWidth = 2;
-        ctx.fillRect(nodeA - 20, cy - 22, 40, 44);
-        ctx.strokeRect(nodeA - 20, cy - 22, 40, 44);
-
-        ctx.fillRect(nodeB - 20, cy - 22, 40, 44);
-        ctx.strokeRect(nodeB - 20, cy - 22, 40, 44);
-
-        ctx.fillStyle = '#ffffff';
-        ctx.fillRect(nodeA - 12, cy - 12, 24, 4);
-        ctx.fillRect(nodeA - 12, cy, 24, 4);
-        ctx.fillRect(nodeB - 12, cy - 12, 24, 4);
-        ctx.fillRect(nodeB - 12, cy, 24, 4);
-
-        const pulseProgress = (t * 1.2) % 1;
-        const px = nodeA + pulseProgress * (nodeB - nodeA);
-
-        ctx.fillStyle = '#ffffff';
-        ctx.beginPath();
-        ctx.arc(px, cy, 5, 0, Math.PI * 2);
-        ctx.fill();
-
-        ctx.fillStyle = '#888888';
-        ctx.beginPath();
-        ctx.arc(px - 8, cy, 3, 0, Math.PI * 2);
-        ctx.fill();
-    }
-
-    // -------------------------------------------------------------
-    // Downloader Form Logic
-    // -------------------------------------------------------------
-    const form = document.getElementById('downloadForm');
-    const submitBtn = document.getElementById('submitBtn');
-    const progressCard = document.getElementById('progressCard');
-    const progressBar = document.getElementById('progressBar');
-    const percentLabel = document.getElementById('percentLabel');
-    const statusLabel = document.getElementById('statusLabel');
-    const statusMsg = document.getElementById('statusMsg');
-    const downloadBtn = document.getElementById('downloadBtn');
-
+    let currentUrl = '';
     let pollInterval = null;
 
-    form.addEventListener('submit', async (e) => {
-        e.preventDefault();
+    async function fetchFormats() {
         const url = document.getElementById('videoUrl').value.trim();
-        if (!url) return;
+        if (!url) return alert('Please enter a valid URL');
 
-        submitBtn.disabled = true;
-        progressCard.style.display = 'block';
-        downloadBtn.style.display = 'none';
-        progressBar.style.width = '0%';
-        percentLabel.textContent = '0%';
-        statusLabel.textContent = 'Initiating stream...';
-        statusMsg.textContent = '';
+        currentUrl = url;
+        hideError();
+        document.getElementById('statusText').innerText = 'Fetching available formats...';
 
         try {
-            const res = await fetch('/download', {
+            const response = await fetch('/get-formats', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ url })
+                body: JSON.stringify({ url: url })
             });
-            const data = await res.json();
 
-            if (res.ok) {
-                startPolling();
+            const data = await response.json();
+
+            if (!response.ok || data.error) {
+                showError(data.error || 'Failed to parse video info.');
+                document.getElementById('statusText').innerText = '';
+                return;
+            }
+
+            document.getElementById('statusText').innerText = '';
+            document.getElementById('modalTitle').innerText = data.title;
+
+            const select = document.getElementById('formatSelect');
+            select.innerHTML = '';
+            data.formats.forEach(f => {
+                const opt = document.createElement('option');
+                opt.value = f.format_id;
+                opt.innerText = f.label;
+                select.appendChild(opt);
+            });
+
+            document.getElementById('formatModal').style.display = 'flex';
+        } catch (err) {
+            showError(err.toString());
+        }
+    }
+
+    async function startDownload() {
+        document.getElementById('formatModal').style.display = 'none';
+        const selectedFormat = document.getElementById('formatSelect').value;
+
+        document.getElementById('progressBar').style.display = 'block';
+        document.getElementById('statusText').innerText = 'Starting download...';
+
+        try {
+            const response = await fetch('/download', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ url: currentUrl, format_id: selectedFormat })
+            });
+
+            const data = await response.json();
+            if (data.error) {
+                showError(data.error);
             } else {
-                showError(data.error || 'Failed to start download.');
+                pollInterval = setInterval(checkProgress, 1000);
             }
         } catch (err) {
-            showError('Network error starting download.');
+            showError(err.toString());
         }
-    });
+    }
 
-    function startPolling() {
-        if (pollInterval) clearInterval(pollInterval);
+    async function checkProgress() {
+        try {
+            const res = await fetch('/progress');
+            const data = await res.json();
 
-        pollInterval = setInterval(async () => {
-            try {
-                const res = await fetch('/progress');
-                const data = await res.json();
-
-                if (data.status === 'downloading') {
-                    const percent = data.percent || 0;
-                    progressBar.style.width = percent + '%';
-                    percentLabel.textContent = percent + '%';
-                    statusLabel.textContent = 'Extracting media...';
-                    if (data.filename) statusMsg.textContent = data.filename;
-                } 
-                else if (data.status === 'completed') {
-                    clearInterval(pollInterval);
-                    progressBar.style.width = '100%';
-                    percentLabel.textContent = '100%';
-                    statusLabel.textContent = 'Ready!';
-                    statusMsg.textContent = 'Extraction complete.';
-                    downloadBtn.style.display = 'block';
-                    submitBtn.disabled = false;
-                } 
-                else if (data.status === 'error') {
-                    clearInterval(pollInterval);
-                    showError(data.error || 'An error occurred during download.');
-                }
-            } catch (err) {
-                console.error('Progress check failed:', err);
+            if (data.status === 'downloading') {
+                document.getElementById('progressFill').style.width = data.progress + '%';
+                document.getElementById('statusText').innerText = `${data.progress}% - ${data.speed} (ETA: ${data.eta})`;
+            } else if (data.status === 'finished') {
+                document.getElementById('progressFill').style.width = '100%';
+                document.getElementById('statusText').innerText = 'Download Complete!';
+                clearInterval(pollInterval);
+            } else if (data.status === 'error') {
+                clearInterval(pollInterval);
+                showError(data.error);
+                document.getElementById('statusText').innerText = '';
             }
-        }, 1000);
+        } catch (err) {
+            clearInterval(pollInterval);
+            showError(err.toString());
+        }
     }
 
     function showError(msg) {
-        statusLabel.textContent = 'Error';
-        statusLabel.style.color = '#ef4444';
-        statusMsg.textContent = msg;
-        submitBtn.disabled = false;
+        document.getElementById('errorContainer').style.display = 'block';
+        document.getElementById('errorText').value = msg;
+    }
+
+    function hideError() {
+        document.getElementById('errorContainer').style.display = 'none';
+        document.getElementById('errorText').value = '';
+    }
+
+    function copyError() {
+        const errorText = document.getElementById('errorText');
+        errorText.select();
+        document.execCommand('copy');
+        alert('Error copied to clipboard!');
     }
 </script>
 
