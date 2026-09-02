@@ -41,7 +41,7 @@ def progress_hook(d):
         download_status['percent'] = 100
 
 def run_download(url):
-    """Executes yt-dlp in a background thread with speed optimizations."""
+    """Executes yt-dlp in a background thread using standard web client processing."""
     global download_status
     download_status = {'status': 'downloading', 'percent': 0}
 
@@ -63,20 +63,12 @@ def run_download(url):
             print(f"Error copying secret cookies: {e}")
 
     ydl_opts = {
-        # Universal stream matching targeting 1080p with MP4 output merging
-        'format': 'bv*+ba/b',
-        'format_sort': ['res:1080', 'ext:mp4:m4a'],
+        # Restored standard computer/web format selection merged via FFmpeg into MP4
+        'format': 'bestvideo[height<=1080]+bestaudio/best[height<=1080]/best',
         'outtmpl': os.path.join(DOWNLOAD_FOLDER, '%(title)s.%(ext)s'),
         'merge_output_format': 'mp4',
 
-        # Client emulation args to bypass YouTube bot detection & "page reload" errors
-        'extractor_args': {
-            'youtube': {
-                'player_client': ['tvembedded', 'ios', 'mweb', 'android']
-            }
-        },
-
-        # Speed Optimizations: fetch fragments in parallel and optimize HTTP throughput
+        # Speed Optimizations
         'concurrent_fragment_downloads': 8,
         'http_chunk_size': 10485760,  # 10MB chunk size
         'buffersize': 1024 * 64,       # 64KB buffer
@@ -96,7 +88,7 @@ def run_download(url):
         print("WARNING: No cookies found. Download may fail with bot detection.")
 
     try:
-        print(f"Starting optimized download for: {url}")
+        print(f"Starting download for: {url}")
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
             ydl.download([url])
 
