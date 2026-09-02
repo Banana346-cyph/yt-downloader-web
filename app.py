@@ -49,7 +49,17 @@ def get_base_ydl_opts():
         'quiet': True,
         'no_warnings': True,
         'remote_components': ['ejs:github'],
+        # Rotate mobile clients to bypass cloud server IP blocks during metadata extraction
+        'extractor_args': {
+            'youtube': {
+                'player_client': ['mweb', 'ios', 'android', 'web']
+            }
+        },
+        'http_headers': {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36'
+        }
     }
+    
     cookie_file = find_cookie_file()
     if cookie_file:
         opts['cookiefile'] = cookie_file
@@ -93,7 +103,6 @@ def run_download(url, format_id=None):
 
     ydl_opts = get_base_ydl_opts()
 
-    # If user selected a specific video format ID, attempt merging with best audio
     if format_id and format_id != 'auto':
         ydl_format = f"{format_id}+bestaudio/best"
     else:
@@ -159,7 +168,10 @@ def get_formats():
                 'formats': formats
             })
     except Exception as e:
-        return jsonify({'error': str(e)}), 500
+        err_msg = str(e)
+        if "The page needs to be reloaded" in err_msg:
+            err_msg += "\n\n[Action Required] Render's IP address is flagged by YouTube. Run sync.py from your local machine to upload fresh browser cookies to Render."
+        return jsonify({'error': err_msg}), 400
 
 @app.route('/download', methods=['POST'])
 def download():
