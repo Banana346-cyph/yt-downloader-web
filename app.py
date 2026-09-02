@@ -9,9 +9,11 @@ import static_ffmpeg
 import yt_dlp
 
 # Set path to the project-installed Deno executable inside Render container
-deno_bin_dir = os.path.join(os.getcwd(), 'deno', 'bin')
-if os.path.exists(deno_bin_dir):
-    os.environ['PATH'] = deno_bin_dir + os.pathsep + os.environ.get('PATH', '')
+deno_path = os.path.join(os.getcwd(), 'deno', 'bin', 'deno')
+deno_dir = os.path.dirname(deno_path)
+
+if os.path.exists(deno_dir):
+    os.environ['PATH'] = deno_dir + os.pathsep + os.environ.get('PATH', '')
 
 # Register FFmpeg in PATH
 static_ffmpeg.add_paths()
@@ -63,7 +65,7 @@ def run_download(url):
             print(f"Error copying secret cookies: {e}")
 
     ydl_opts = {
-        # Restored standard computer/web format selection merged via FFmpeg into MP4
+        # Standard computer/web format selection merged via FFmpeg into MP4
         'format': 'bestvideo[height<=1080]+bestaudio/best[height<=1080]/best',
         'outtmpl': os.path.join(DOWNLOAD_FOLDER, '%(title)s.%(ext)s'),
         'merge_output_format': 'mp4',
@@ -77,7 +79,7 @@ def run_download(url):
         'nocheckcertificate': True,
         'remote_components': ['ejs:github'],
         'js_runtimes': {
-            'deno': {'path': os.path.join(deno_bin_dir, 'deno') if os.path.exists(deno_bin_dir) else 'deno'}
+            'deno': {'path': deno_path if os.path.exists(deno_path) else 'deno'}
         }
     }
 
