@@ -4,7 +4,7 @@ import glob
 import threading
 from flask import Flask, render_template, request, jsonify
 
-# 1. Update system PATH at startup so yt-dlp can auto-detect Deno
+# Prepend Deno paths to system PATH so yt-dlp auto-detects the JavaScript runtime
 deno_dirs = [
     os.path.join(os.getcwd(), 'deno', 'bin'),
     os.path.expanduser('~/.deno/bin'),
@@ -78,7 +78,7 @@ def run_download(url):
         'quiet': True,
         'no_warnings': False,
         'remote_components': ['ejs:github'],
-        # Disable tv_downgraded client which causes "The page needs to be reloaded"
+        # Exclude broken tv_downgraded client to fix "The page needs to be reloaded"
         'extractor_args': {
             'youtube': {
                 'player_client': ['default', '-tv_downgraded', 'web_embedded']
@@ -89,7 +89,6 @@ def run_download(url):
     if cookie_file:
         ydl_opts['cookiefile'] = cookie_file
 
-    # Search for Deno executable
     deno_exe = None
     for candidate in [
         os.path.join(os.getcwd(), 'deno', 'bin', 'deno'),
@@ -118,7 +117,10 @@ def index():
 
 @app.route('/download', methods=['POST'])
 def download():
-    url = request.form.get('url')
+    # Supports JSON body payloads and standard HTML form data
+    data = request.get_json(silent=True) or {}
+    url = data.get('url') or request.form.get('url')
+    
     if not url:
         return jsonify({'error': 'URL is required'}), 400
 
@@ -133,17 +135,20 @@ def progress():
 @app.route('/update-cookies', methods=['POST'])
 def update_cookies():
     try:
-        data = request.get_json()
-        if not data or 'cookies' not in data:
+        data = request.get_json(silent=True) or {}
+        cookie_text = data.get('cookies') or request.data.decode('utf-8')
+        
+        if not cookie_text:
             return jsonify({'error': 'No cookie content provided'}), 400
 
         cookie_path = os.path.join(os.getcwd(), 'cookies.txt')
-        with open(cookie_path, 'w') as f:
-            f.write(data['cookies'])
+        with open(cookie_path, 'w', encoding='utf-8') as f:
+            f.write(cookie_text)
 
         return jsonify({'status': 'success', 'message': 'Cookies updated successfully'})
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5000, debug=True)
+    port = int(os.environ.get('PORT', 5000))
+    app.run(host='0.0.0.0', port=port)
