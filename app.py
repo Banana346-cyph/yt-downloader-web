@@ -62,16 +62,16 @@ def run_download(url):
             print(f"Error copying secret cookies: {e}")
 
     ydl_opts = {
-        # Universal format selector: grabs best available streams with automatic fallback
+        # Flexible format selector with MP4 merging
         'format': 'bv*+ba/b',
         'format_sort': ['res:1080', 'ext:mp4:m4a'],
         'outtmpl': os.path.join(DOWNLOAD_FOLDER, '%(title)s.%(ext)s'),
         'merge_output_format': 'mp4',
 
-        # Mobile Web and TV clients bypass datacenter IP stream restrictions
+        # Prioritize tvembedded to bypass web player bot verification & reload blocks
         'extractor_args': {
             'youtube': {
-                'player_client': ['mweb', 'tv', 'android', 'ios']
+                'player_client': ['tvembedded', 'ios', 'mweb', 'android']
             }
         },
 
