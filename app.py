@@ -62,15 +62,16 @@ def run_download(url):
             print(f"Error copying secret cookies: {e}")
 
     ydl_opts = {
-        # Relaxed format string allowing yt-dlp to grab any available 1080p stream for FFmpeg merging
-        'format': 'bestvideo[height<=1080]+bestaudio/best[height<=1080]/best',
+        # Universal format selector: grabs best available streams with automatic fallback
+        'format': 'bv*+ba/b',
+        'format_sort': ['res:1080', 'ext:mp4:m4a'],
         'outtmpl': os.path.join(DOWNLOAD_FOLDER, '%(title)s.%(ext)s'),
         'merge_output_format': 'mp4',
 
-        # Bypass YouTube web client verification by falling back to Android/iOS API streams
+        # Mobile Web and TV clients bypass datacenter IP stream restrictions
         'extractor_args': {
             'youtube': {
-                'player_client': ['android', 'ios', 'web']
+                'player_client': ['mweb', 'tv', 'android', 'ios']
             }
         },
 
